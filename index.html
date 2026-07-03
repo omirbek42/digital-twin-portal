@@ -1,189 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Цифровой двойник — портал ДЗО КМГ</title>
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Пульт управления компанией — CEO</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-
-<!-- ===================== ЭКРАН ВХОДА ===================== -->
-<section id="login-screen">
-  <form class="login-card" id="login-form" novalidate>
-    <div class="login-logo">КМГ · Портал</div>
-    <h1>Цифровой двойник</h1>
-
-    <div class="login-error hidden" id="login-error">Неверный логин или пароль.</div>
-
-    <div class="field">
-      <label for="login-input">Логин</label>
-      <input id="login-input" name="username" type="text" autocomplete="username" required>
-    </div>
-    <div class="field">
-      <label for="password-input">Пароль</label>
-      <input id="password-input" name="password" type="password" autocomplete="current-password" required>
-    </div>
-
-    <button type="submit" class="btn-primary">Войти</button>
-
-    <div class="login-hint">
-      Демо-доступ (прототип, без серверной аутентификации):<br>
-      admin / Admin#2026 — Администратор<br>
-      ozen.lead / Ozen#2026 — Рук. РГ Озенмунайгаз<br>
-      emba.spec / Emba#2026 — Специалист Эмбамунайгаз<br>
-      viewer / View#2026 — Читатель
-    </div>
-  </form>
-</section>
-
-<!-- ===================== ПРИЛОЖЕНИЕ ===================== -->
-<div id="app" class="hidden">
-  <aside class="sidebar">
-    <div class="brand">КМГ · Портал<strong>Цифровой двойник</strong></div>
-
-    <nav id="nav">
-      <button class="nav-item" data-section="home"><span class="nav-icon">⌂</span>Главная</button>
-      <button class="nav-item" data-section="kb"><span class="nav-icon">▤</span>База знаний</button>
-      <button class="nav-item" data-section="press"><span class="nav-icon">✦</span>Пресс-релизы</button>
-      <button class="nav-item" data-section="training"><span class="nav-icon">◎</span>Обучение</button>
-      <button class="nav-item" data-section="contacts"><span class="nav-icon">☰</span>Рабочие группы</button>
-      <button class="nav-item" data-section="kanban"><span class="nav-icon">▦</span>Канбан Upstream</button>
-    </nav>
-
-    <div class="sidebar-footer">
-      <div class="user-card">
-        <div class="name" id="current-user-name">—</div>
-        <div class="role" id="current-user-role">—</div>
+  <div class="page">
+    <header class="topbar">
+      <div>
+        <h1>Пульт управления компанией</h1>
+        <div class="subtitle">Прототип MVP — консолидированный статус департаментов в реальном времени</div>
       </div>
-      <button class="btn-logout" id="logout-btn">Выйти</button>
-    </div>
-  </aside>
+    </header>
 
-  <div class="main">
-    <div class="topbar">
-      <div class="search-box">
-        <input type="text" id="search-input" placeholder="Поиск в текущем разделе…">
+    <div class="landing-grid">
+      <div class="landing-card">
+        <h2>Ввод показателей департамента</h2>
+        <p>Для сотрудников департаментов: выберите свой департамент и внесите текущие показатели за период.</p>
+        <a class="btn" href="department-entry.html">Открыть форму ввода</a>
       </div>
-      <div class="topbar-section-label" id="topbar-label">Главная</div>
-    </div>
-
-    <div class="content" id="content">
-      <!-- ---------- Главная ---------- -->
-      <section id="section-home" class="section">
-        <div class="section-header">
-          <h2>Главная</h2>
-          <span class="section-sub">Обзор платформы «Цифровой двойник»</span>
-        </div>
-
-        <div class="stats-grid" id="home-stats"></div>
-
-        <div class="twin-illustration">
-          <h3>Физический актив ↔ цифровая модель</h3>
-          <div class="twin-diagram">
-            <div class="twin-box">
-              <div class="label">Физический актив</div>
-              <svg viewBox="0 0 220 140" fill="none">
-                <rect x="10" y="60" width="200" height="60" rx="4" stroke="#6b7686" stroke-width="2"/>
-                <rect x="30" y="20" width="16" height="40" fill="#3a4657"/>
-                <rect x="70" y="30" width="16" height="30" fill="#3a4657"/>
-                <rect x="150" y="10" width="16" height="50" fill="#3a4657"/>
-                <circle cx="38" cy="90" r="6" fill="#ff8a3d"/>
-                <circle cx="90" cy="90" r="6" fill="#4cd97b"/>
-                <circle cx="140" cy="90" r="6" fill="#e8c547"/>
-                <circle cx="180" cy="90" r="6" fill="#ff8a3d"/>
-                <text x="20" y="132" fill="#6b7686" font-size="9" font-family="IBM Plex Mono">датчики · телеметрия</text>
-              </svg>
-            </div>
-            <div class="twin-arrow">⇄</div>
-            <div class="twin-box">
-              <div class="label">Цифровая модель</div>
-              <svg viewBox="0 0 220 140" fill="none">
-                <rect x="10" y="60" width="200" height="60" rx="4" stroke="#3ddbd9" stroke-width="2" stroke-dasharray="4 3"/>
-                <rect x="30" y="20" width="16" height="40" fill="none" stroke="#3ddbd9" stroke-width="1.5"/>
-                <rect x="70" y="30" width="16" height="30" fill="none" stroke="#3ddbd9" stroke-width="1.5"/>
-                <rect x="150" y="10" width="16" height="50" fill="none" stroke="#3ddbd9" stroke-width="1.5"/>
-                <path d="M20 100 L200 100" stroke="#3ddbd9" stroke-width="1" stroke-dasharray="2 2"/>
-                <path d="M20 110 L200 105" stroke="#3ddbd9" stroke-width="1" stroke-dasharray="2 2"/>
-                <text x="20" y="132" fill="#3ddbd9" font-size="9" font-family="IBM Plex Mono">модель · прогноз</text>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div class="dzo-ring">
-          <h3>Подключение ДЗО к единому контуру</h3>
-          <div class="dzo-nodes" id="dzo-nodes"></div>
-        </div>
-
-        <div class="preview-columns">
-          <div class="preview-block">
-            <h3>Последние документы <button data-goto="kb">Все документы →</button></h3>
-            <div class="card-grid" id="preview-kb"></div>
-          </div>
-          <div class="preview-block">
-            <h3>Последние пресс-релизы <button data-goto="press">Все релизы →</button></h3>
-            <div class="card-grid" id="preview-press"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ---------- База знаний ---------- -->
-      <section id="section-kb" class="section hidden">
-        <div class="section-header">
-          <h2>База знаний</h2>
-          <span class="section-sub">Регламенты, стандарты и материалы по цифровым двойникам</span>
-        </div>
-        <div class="chip-row" id="kb-categories"></div>
-        <div class="card-grid" id="kb-list"></div>
-      </section>
-
-      <!-- ---------- Пресс-релизы ---------- -->
-      <section id="section-press" class="section hidden">
-        <div class="section-header">
-          <h2>Пресс-релизы</h2>
-          <span class="section-sub">Новости о ходе проекта цифрового двойника</span>
-        </div>
-        <div class="chip-row" id="press-dzo-filter"></div>
-        <div class="card-grid" id="press-list"></div>
-      </section>
-
-      <!-- ---------- Обучение ---------- -->
-      <section id="section-training" class="section hidden">
-        <div class="section-header">
-          <h2>Обучающие материалы</h2>
-          <span class="section-sub">Курсы, практикумы, вебинары и пособия</span>
-        </div>
-        <div class="chip-row" id="training-type-filter"></div>
-        <div class="card-grid" id="training-list"></div>
-      </section>
-
-      <!-- ---------- Контакты ---------- -->
-      <section id="section-contacts" class="section hidden">
-        <div class="section-header">
-          <h2>Рабочие группы</h2>
-          <span class="section-sub">Контакты участников по ДЗО</span>
-        </div>
-        <div id="contacts-list"></div>
-      </section>
-
-      <!-- ---------- Канбан ---------- -->
-      <section id="section-kanban" class="section hidden">
-        <div class="section-header">
-          <h2>Канбан-доска Upstream</h2>
-          <span class="section-sub">Задачи внедрения цифрового двойника (блок Upstream)</span>
-        </div>
-        <div class="chip-row" id="kanban-dzo-filter"></div>
-        <div class="kanban-board" id="kanban-board"></div>
-      </section>
+      <div class="landing-card">
+        <h2>Дашборд CEO</h2>
+        <p>Консолидированный статус всех департаментов, риски и алармы, ключевые показатели компании.</p>
+        <a class="btn" href="ceo-dashboard.html">Открыть дашборд</a>
+      </div>
     </div>
   </div>
-</div>
-
-<!-- ===================== МОДАЛЬНЫЕ ОКНА ===================== -->
-<div id="modal-root"></div>
-
-<script src="data.js"></script>
-<script src="app.js"></script>
 </body>
 </html>

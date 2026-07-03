@@ -1,122 +1,232 @@
-/* Демо-данные прототипа «Цифровой двойник» — хранятся только в памяти браузера */
+// Общая модель данных, хранилище и логика оценки рисков.
+// Используется и department-entry.html, и ceo-dashboard.html через localStorage.
 
-const DZO_LIST = [
-  { id: "d1", name: "Озенмунайгаз", segment: "Добыча (Upstream)" },
-  { id: "d2", name: "Эмбамунайгаз", segment: "Добыча (Upstream)" },
-  { id: "d3", name: "Каражанбасмунай", segment: "Добыча (Upstream)" },
-  { id: "d4", name: "КМГ Инжиниринг", segment: "Инжиниринг и EPC" },
-  { id: "d5", name: "КазТрансОйл", segment: "Транспортировка (Midstream)" },
-  { id: "d6", name: "Атырауский НПЗ", segment: "Переработка (Downstream)" },
-  { id: "d7", name: "Павлодарский НХЗ", segment: "Переработка (Downstream)" },
-  { id: "d8", name: "Дирекция цифровизации КМГ", segment: "ИТ и цифровизация" },
+const DEPARTMENTS = [
+  {
+    id: 'sales',
+    name: 'Продажи',
+    metrics: [
+      { key: 'revenueActual', label: 'Выручка за период (факт)', unit: '₸' },
+      { key: 'revenuePlan', label: 'План выручки', unit: '₸' },
+      { key: 'pipeline', label: 'Pipeline (открытые сделки)', unit: '₸' },
+      { key: 'conversionRate', label: 'Конверсия воронки', unit: '%' },
+      { key: 'newClients', label: 'Новые клиенты', unit: 'шт' },
+    ],
+  },
+  {
+    id: 'marketing',
+    name: 'Маркетинг',
+    metrics: [
+      { key: 'newLeads', label: 'Новые лиды', unit: 'шт' },
+      { key: 'cacCurrent', label: 'CAC текущий', unit: '₸' },
+      { key: 'cacLastWeek', label: 'CAC на прошлой неделе', unit: '₸' },
+      { key: 'budgetSpent', label: 'Освоено бюджета', unit: '₸' },
+    ],
+  },
+  {
+    id: 'finance',
+    name: 'Финансы',
+    metrics: [
+      { key: 'cashFlow', label: 'Cash flow за период', unit: '₸' },
+      { key: 'marginActual', label: 'Маржинальность факт', unit: '%' },
+      { key: 'marginPlan', label: 'Маржинальность план', unit: '%' },
+      { key: 'receivables', label: 'Дебиторская задолженность', unit: '₸' },
+      { key: 'payables', label: 'Кредиторская задолженность', unit: '₸' },
+    ],
+  },
+  {
+    id: 'operations',
+    name: 'Операции',
+    metrics: [
+      { key: 'planExecution', label: 'Выполнение операционного плана', unit: '%' },
+      { key: 'defectRate', label: 'Уровень брака', unit: '%' },
+      { key: 'capacityUtilization', label: 'Загрузка мощностей', unit: '%' },
+    ],
+  },
+  {
+    id: 'hr',
+    name: 'HR',
+    metrics: [
+      { key: 'headcountCurrent', label: 'Штат текущий', unit: 'чел' },
+      { key: 'openVacancies', label: 'Открытые вакансии', unit: 'шт' },
+      { key: 'turnoverRate', label: 'Текучесть кадров', unit: '%' },
+      { key: 'vacancyClosureRate', label: 'Закрыто вакансий от плана', unit: '%' },
+    ],
+  },
 ];
 
-const USERS = [
-  { login: "admin", password: "Admin#2026", fullName: "Данияр Ахметов", role: "Администратор платформы", dzoId: null },
-  { login: "ozen.lead", password: "Ozen#2026", fullName: "Асхат Жумагулов", role: "Руководитель рабочей группы", dzoId: "d1" },
-  { login: "emba.spec", password: "Emba#2026", fullName: "Гульнара Сатпаева", role: "Специалист рабочей группы", dzoId: "d2" },
-  { login: "viewer", password: "View#2026", fullName: "Марат Ибрагимов", role: "Читатель (просмотр)", dzoId: null },
-];
+const STORAGE_KEY = 'ceo_control_panel_v1';
 
-const KB_CATEGORIES = ["Технологии", "Стандарты", "ИТ-инфраструктура", "Отраслевые практики", "Безопасность данных"];
+function hoursAgo(h) {
+  return new Date(Date.now() - h * 3600 * 1000).toISOString();
+}
 
-const KB_DOCS = [
-  { id: "KB-001", title: "Регламент обновления моделей цифрового двойника", category: "Стандарты", dzoId: "d4", date: "2026-05-12", desc: "Порядок актуализации и версионирования цифровых моделей производственных активов КМГ Инжиниринг." },
-  { id: "KB-002", title: "Стандарт сбора телеметрии с датчиков скважин", category: "Технологии", dzoId: "d1", date: "2026-04-28", desc: "Требования к частоте опроса, форматам данных и протоколам передачи телеметрии Озенмунайгаза." },
-  { id: "KB-003", title: "Политика информационной безопасности данных ЦД", category: "Безопасность данных", dzoId: "d8", date: "2026-06-02", desc: "Правила классификации, доступа и хранения данных цифровых двойников группы КМГ." },
-  { id: "KB-004", title: "Референсная архитектура ИТ-инфраструктуры завода", category: "ИТ-инфраструктура", dzoId: "d6", date: "2026-03-15", desc: "Схема серверных мощностей и сетевых контуров для развёртывания моделей Атырауского НПЗ." },
-  { id: "KB-005", title: "Лучшие практики прогнозной аналитики отказов оборудования", category: "Отраслевые практики", dzoId: "d2", date: "2026-05-30", desc: "Опыт применения предиктивной аналитики на насосном оборудовании Эмбамунайгаза." },
-  { id: "KB-006", title: "Стандарт наименования цифровых активов", category: "Стандарты", dzoId: "d4", date: "2026-02-20", desc: "Единая нотация идентификаторов моделей и объектов для всех ДЗО КМГ." },
-  { id: "KB-007", title: "Технология калибровки модели пласта", category: "Технологии", dzoId: "d1", date: "2026-06-18", desc: "Методика калибровки гидродинамической модели пласта по фактическим данным добычи." },
-  { id: "KB-008", title: "Практика интеграции SCADA и цифрового двойника НПЗ", category: "Отраслевые практики", dzoId: "d7", date: "2026-04-05", desc: "Опыт Павлодарского НХЗ по сопряжению SCADA-систем с моделью переработки." },
-  { id: "KB-009", title: "Инфраструктурные требования к рабочим станциям инженеров", category: "ИТ-инфраструктура", dzoId: "d3", date: "2026-01-22", desc: "Минимальные требования к аппаратному обеспечению для работы с 3D-моделями Каражанбасмуная." },
-  { id: "KB-010", title: "Регламент доступа к данным телеметрии трубопроводов", category: "Безопасность данных", dzoId: "d5", date: "2026-05-08", desc: "Правила разграничения доступа к данным транспортных систем КазТрансОйла." },
-];
-
-const PRESS_RELEASES = [
-  { id: "PR-001", title: "Озенмунайгаз завершил пилот цифрового двойника пласта", dzoId: "d1", date: "2026-06-25", summary: "По итогам пилотного проекта точность прогноза добычи выросла на 12%." },
-  { id: "PR-002", title: "КМГ Инжиниринг представил единый каталог моделей", dzoId: "d4", date: "2026-06-10", summary: "Запущен внутренний каталог цифровых моделей для всех производственных блоков." },
-  { id: "PR-003", title: "Атырауский НПЗ подключил цифровой двойник установки АВТ", dzoId: "d6", date: "2026-05-29", summary: "Модель установки атмосферно-вакуумной трубчатки введена в опытную эксплуатацию." },
-  { id: "PR-004", title: "Эмбамунайгаз снизил простои оборудования на 8%", dzoId: "d2", date: "2026-05-14", summary: "Внедрение прогнозной аналитики позволило сократить незапланированные остановки." },
-  { id: "PR-005", title: "КазТрансОйл расширил телеметрию на два новых участка", dzoId: "d5", date: "2026-04-30", summary: "Мониторинг давления и температуры охватил дополнительные участки магистрали." },
-  { id: "PR-006", title: "Дирекция цифровизации КМГ утвердила стандарт данных", dzoId: "d8", date: "2026-04-11", summary: "Единый стандарт форматов данных обязателен для всех ДЗО с третьего квартала." },
-  { id: "PR-007", title: "Каражанбасмунай начал сбор данных для модели пласта", dzoId: "d3", date: "2026-03-22", summary: "Стартовал этап сбора исторических данных добычи для построения модели." },
-  { id: "PR-008", title: "Павлодарский НХЗ провёл семинар по цифровым двойникам", dzoId: "d7", date: "2026-03-02", summary: "Для инженеров завода проведён обучающий семинар с участием КМГ Инжиниринга." },
-];
-
-const TRAINING_TYPES = ["Курс", "Практикум", "Вебинар", "Пособие"];
-
-const TRAINING_MATERIALS = [
-  { id: "TR-001", title: "Основы цифровых двойников в нефтегазовой отрасли", type: "Курс", duration: "6 часов", level: "Начальный", desc: "Вводный курс о принципах построения и применения цифровых двойников производственных активов." },
-  { id: "TR-002", title: "Работа с телеметрией скважин: практикум", type: "Практикум", duration: "3 часа", level: "Средний", desc: "Практическая работа с потоками данных телеметрии на примере Озенмунайгаза." },
-  { id: "TR-003", title: "Прогнозная аналитика отказов оборудования", type: "Вебинар", duration: "1.5 часа", level: "Средний", desc: "Онлайн-вебинар о методах предиктивного обслуживания оборудования." },
-  { id: "TR-004", title: "Пособие по стандартам наименования цифровых активов", type: "Пособие", duration: "—", level: "Начальный", desc: "Справочное пособие по единой нотации идентификаторов моделей КМГ." },
-  { id: "TR-005", title: "Калибровка гидродинамических моделей пласта", type: "Курс", duration: "10 часов", level: "Продвинутый", desc: "Углублённый курс по методам калибровки моделей пласта для инженеров-разработчиков." },
-  { id: "TR-006", title: "Интеграция SCADA и цифрового двойника", type: "Практикум", duration: "4 часа", level: "Продвинутый", desc: "Практикум по сопряжению SCADA-систем НПЗ с моделями цифровых двойников." },
-  { id: "TR-007", title: "Информационная безопасность данных ЦД", type: "Вебинар", duration: "1 час", level: "Начальный", desc: "Обзор политики безопасности и правил доступа к данным цифровых двойников." },
-  { id: "TR-008", title: "Пособие для новых участников рабочих групп", type: "Пособие", duration: "—", level: "Начальный", desc: "Краткое руководство по работе с порталом «Цифровой двойник» для новых сотрудников." },
-];
-
-const CONTACTS = {
-  d1: [
-    { name: "Асхат Жумагулов", role: "Руководитель РГ", email: "a.zhumagulov@ozenmunaigas.kz", phone: "+7 701 111-22-01" },
-    { name: "Ерлан Сарсенов", role: "Инженер по моделированию", email: "e.sarsenov@ozenmunaigas.kz", phone: "+7 701 111-22-02" },
-    { name: "Айгуль Нурланова", role: "Аналитик данных", email: "a.nurlanova@ozenmunaigas.kz", phone: "+7 701 111-22-03" },
-  ],
-  d2: [
-    { name: "Гульнара Сатпаева", role: "Специалист РГ", email: "g.satpayeva@embamunaigas.kz", phone: "+7 701 222-33-01" },
-    { name: "Бауыржан Кенжеев", role: "Инженер по телеметрии", email: "b.kenzheyev@embamunaigas.kz", phone: "+7 701 222-33-02" },
-  ],
-  d3: [
-    { name: "Нурлан Абенов", role: "Руководитель РГ", email: "n.abenov@karazhanbasmunai.kz", phone: "+7 701 333-44-01" },
-    { name: "Динара Тлеубергенова", role: "Аналитик данных", email: "d.tleubergenova@karazhanbasmunai.kz", phone: "+7 701 333-44-02" },
-  ],
-  d4: [
-    { name: "Марат Ибрагимов", role: "Руководитель РГ", email: "m.ibragimov@kmge.kz", phone: "+7 701 444-55-01" },
-    { name: "Салтанат Оспанова", role: "Инженер-проектировщик ЦД", email: "s.ospanova@kmge.kz", phone: "+7 701 444-55-02" },
-    { name: "Аслан Тукенов", role: "Специалист по интеграции", email: "a.tukenov@kmge.kz", phone: "+7 701 444-55-03" },
-  ],
-  d5: [
-    { name: "Дамир Ахметжанов", role: "Руководитель РГ", email: "d.akhmetzhanov@kaztransoil.kz", phone: "+7 701 555-66-01" },
-    { name: "Жанна Бекова", role: "Инженер SCADA", email: "zh.bekova@kaztransoil.kz", phone: "+7 701 555-66-02" },
-  ],
-  d6: [
-    { name: "Тимур Оразбаев", role: "Руководитель РГ", email: "t.orazbayev@anpz.kz", phone: "+7 701 666-77-01" },
-    { name: "Индира Мусаева", role: "Специалист рабочей группы", email: "i.mussayeva@anpz.kz", phone: "+7 701 666-77-02" },
-    { name: "Рустем Байжанов", role: "Инженер по автоматизации", email: "r.baizhanov@anpz.kz", phone: "+7 701 666-77-03" },
-  ],
-  d7: [
-    { name: "Сая Кабдешова", role: "Руководитель РГ", email: "s.kabdeshova@pnhz.kz", phone: "+7 701 777-88-01" },
-    { name: "Ержан Дюсенов", role: "Инженер-технолог", email: "y.dyussenov@pnhz.kz", phone: "+7 701 777-88-02" },
-  ],
-  d8: [
-    { name: "Данияр Ахметов", role: "Администратор платформы", email: "d.akhmetov@kmg.kz", phone: "+7 701 888-99-01" },
-    { name: "Алия Смагулова", role: "Координатор проекта ЦД", email: "a.smagulova@kmg.kz", phone: "+7 701 888-99-02" },
-  ],
+const SEED_DATA = {
+  sales: {
+    values: { revenueActual: 48000000, revenuePlan: 50000000, pipeline: 20000000, conversionRate: 12, newClients: 18 },
+    lastUpdated: hoursAgo(5),
+  },
+  marketing: {
+    values: { newLeads: 280, cacCurrent: 7800, cacLastWeek: 7100, budgetSpent: 3200000 },
+    lastUpdated: hoursAgo(30),
+  },
+  finance: {
+    values: { cashFlow: -800000, marginActual: 20, marginPlan: 22, receivables: 4000000, payables: 3000000 },
+    lastUpdated: hoursAgo(12),
+  },
+  operations: {
+    values: { planExecution: 91, defectRate: 7, capacityUtilization: 88 },
+    lastUpdated: hoursAgo(48),
+  },
+  hr: {
+    values: { headcountCurrent: 134, openVacancies: 9, turnoverRate: 4, vacancyClosureRate: 65 },
+    lastUpdated: hoursAgo(70),
+  },
 };
 
-const KANBAN_COLUMNS = [
-  { id: "todo", title: "К выполнению" },
-  { id: "inprogress", title: "В работе" },
-  { id: "review", title: "На проверке" },
-  { id: "done", title: "Выполнено" },
-];
-
-const KANBAN_TASKS = [
-  { id: "T-001", title: "Калибровка модели пласта", dzoId: "d1", assignee: "Ерлан Сарсенов", priority: "Высокий", due: "2026-07-10", column: "todo" },
-  { id: "T-002", title: "Настройка сбора телеметрии насосов", dzoId: "d2", assignee: "Бауыржан Кенжеев", priority: "Средний", due: "2026-07-15", column: "todo" },
-  { id: "T-003", title: "Согласование архитектуры интеграции SCADA", dzoId: "d6", assignee: "Рустем Байжанов", priority: "Высокий", due: "2026-06-28", column: "inprogress" },
-  { id: "T-004", title: "Разработка каталога моделей ЦД", dzoId: "d4", assignee: "Салтанат Оспанова", priority: "Средний", due: "2026-07-05", column: "inprogress" },
-  { id: "T-005", title: "Тестирование прогнозной модели отказов", dzoId: "d2", assignee: "Гульнара Сатпаева", priority: "Низкий", due: "2026-07-20", column: "inprogress" },
-  { id: "T-006", title: "Проверка регламента доступа к данным", dzoId: "d5", assignee: "Жанна Бекова", priority: "Средний", due: "2026-06-30", column: "review" },
-  { id: "T-007", title: "Ревью документации по стандарту наименования", dzoId: "d4", assignee: "Аслан Тукенов", priority: "Низкий", due: "2026-07-02", column: "review" },
-  { id: "T-008", title: "Сбор исторических данных добычи", dzoId: "d3", assignee: "Динара Тлеубергенова", priority: "Высокий", due: "2026-06-15", column: "done" },
-  { id: "T-009", title: "Пилот цифрового двойника пласта", dzoId: "d1", assignee: "Асхат Жумагулов", priority: "Высокий", due: "2026-06-20", column: "done" },
-  { id: "T-010", title: "Семинар по цифровым двойникам для инженеров", dzoId: "d7", assignee: "Ержан Дюсенов", priority: "Низкий", due: "2026-05-30", column: "done" },
-];
-
-const KANBAN_ASSIGNEES = {
-  d1: ["Асхат Жумагулов", "Ерлан Сарсенов", "Айгуль Нурланова"],
-  d2: ["Гульнара Сатпаева", "Бауыржан Кенжеев"],
-  d4: ["Марат Ибрагимов", "Салтанат Оспанова", "Аслан Тукенов"],
+const storage = {
+  _read() {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      return null;
+    }
+  },
+  _write(data) {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  },
+  ensureSeeded() {
+    if (!this._read()) {
+      this._write(SEED_DATA);
+    }
+  },
+  getAll() {
+    this.ensureSeeded();
+    return this._read();
+  },
+  getDepartment(id) {
+    const all = this.getAll();
+    return all[id] || { values: {}, lastUpdated: null };
+  },
+  setDepartment(id, values) {
+    const all = this.getAll();
+    all[id] = { values, lastUpdated: new Date().toISOString() };
+    this._write(all);
+  },
 };
+
+window.storage = storage;
+window.DEPARTMENTS = DEPARTMENTS;
+
+// Единая функция оценки рисков — пороги калибруются здесь.
+function evaluateRisks(deptId, v) {
+  const alarms = [];
+  const num = (x) => (typeof x === 'number' && !Number.isNaN(x) ? x : 0);
+
+  if (deptId === 'sales') {
+    const plan = num(v.revenuePlan);
+    const ratio = plan > 0 ? (num(v.revenueActual) / plan) * 100 : 100;
+    if (ratio < 80) {
+      alarms.push({ severity: 'red', text: `Факт/план выручки ${ratio.toFixed(0)}% (факт ${fmtMoney(v.revenueActual)}, план ${fmtMoney(v.revenuePlan)})` });
+    } else if (ratio <= 95) {
+      alarms.push({ severity: 'yellow', text: `Факт/план выручки ${ratio.toFixed(0)}% (факт ${fmtMoney(v.revenueActual)}, план ${fmtMoney(v.revenuePlan)})` });
+    }
+    if (num(v.conversionRate) < 10) {
+      alarms.push({ severity: 'yellow', text: `Конверсия воронки ${num(v.conversionRate)}% (ниже 10%)` });
+    }
+  }
+
+  if (deptId === 'marketing') {
+    const prev = num(v.cacLastWeek);
+    const growth = prev > 0 ? ((num(v.cacCurrent) - prev) / prev) * 100 : 0;
+    if (growth > 15) {
+      alarms.push({ severity: 'red', text: `Рост CAC к прошлой неделе ${growth.toFixed(0)}% (${fmtMoney(v.cacLastWeek)} → ${fmtMoney(v.cacCurrent)})` });
+    } else if (growth >= 5) {
+      alarms.push({ severity: 'yellow', text: `Рост CAC к прошлой неделе ${growth.toFixed(0)}% (${fmtMoney(v.cacLastWeek)} → ${fmtMoney(v.cacCurrent)})` });
+    }
+  }
+
+  if (deptId === 'finance') {
+    const delta = num(v.marginActual) - num(v.marginPlan);
+    if (delta <= -4) {
+      alarms.push({ severity: 'red', text: `Маржа хуже плана на ${Math.abs(delta).toFixed(1)} п.п. (факт ${v.marginActual}%, план ${v.marginPlan}%)` });
+    } else if (delta <= -1) {
+      alarms.push({ severity: 'yellow', text: `Маржа хуже плана на ${Math.abs(delta).toFixed(1)} п.п. (факт ${v.marginActual}%, план ${v.marginPlan}%)` });
+    }
+    if (num(v.cashFlow) < 0) {
+      alarms.push({ severity: 'red', text: `Отрицательный cash flow: ${fmtMoney(v.cashFlow)}` });
+    }
+    const payables = num(v.payables);
+    if (payables > 0 && num(v.receivables) / payables > 2) {
+      alarms.push({ severity: 'yellow', text: `Дебиторка/кредиторка ${(num(v.receivables) / payables).toFixed(1)}x (${fmtMoney(v.receivables)} / ${fmtMoney(v.payables)})` });
+    }
+  }
+
+  if (deptId === 'operations') {
+    const exec = num(v.planExecution);
+    if (exec < 85) {
+      alarms.push({ severity: 'red', text: `Выполнение плана ${exec}% (ниже 85%)` });
+    } else if (exec <= 95) {
+      alarms.push({ severity: 'yellow', text: `Выполнение плана ${exec}% (85–95%)` });
+    }
+    const defect = num(v.defectRate);
+    if (defect > 10) {
+      alarms.push({ severity: 'red', text: `Уровень брака ${defect}% (выше 10%)` });
+    } else if (defect >= 5) {
+      alarms.push({ severity: 'yellow', text: `Уровень брака ${defect}% (5–10%)` });
+    }
+    if (num(v.capacityUtilization) > 95) {
+      alarms.push({ severity: 'yellow', text: `Загрузка мощностей ${v.capacityUtilization}% (выше 95%)` });
+    }
+  }
+
+  if (deptId === 'hr') {
+    const turnover = num(v.turnoverRate);
+    if (turnover > 10) {
+      alarms.push({ severity: 'red', text: `Текучесть кадров ${turnover}% (выше 10%)` });
+    } else if (turnover >= 5) {
+      alarms.push({ severity: 'yellow', text: `Текучесть кадров ${turnover}% (5–10%)` });
+    }
+    if (num(v.openVacancies) > 0 && num(v.vacancyClosureRate) < 50) {
+      alarms.push({ severity: 'yellow', text: `Закрыто вакансий от плана ${v.vacancyClosureRate}% при ${v.openVacancies} открытых вакансиях` });
+    }
+  }
+
+  return alarms;
+}
+
+function statusFromAlarms(alarms) {
+  if (alarms.some((a) => a.severity === 'red')) return 'red';
+  if (alarms.some((a) => a.severity === 'yellow')) return 'yellow';
+  return 'green';
+}
+
+function fmtMoney(n) {
+  if (typeof n !== 'number' || Number.isNaN(n)) return '—';
+  return new Intl.NumberFormat('ru-RU').format(Math.round(n)) + ' ₸';
+}
+
+function fmtNumber(n, unit) {
+  if (typeof n !== 'number' || Number.isNaN(n)) return '—';
+  if (unit === '₸') return fmtMoney(n);
+  return new Intl.NumberFormat('ru-RU').format(n) + (unit ? ' ' + unit : '');
+}
+
+function fmtRelativeTime(iso) {
+  if (!iso) return 'нет данных';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'только что';
+  if (mins < 60) return `${mins} мин. назад`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} ч. назад`;
+  const days = Math.floor(hours / 24);
+  return `${days} дн. назад`;
+}
+
+window.evaluateRisks = evaluateRisks;
+window.statusFromAlarms = statusFromAlarms;
+window.fmtMoney = fmtMoney;
+window.fmtNumber = fmtNumber;
+window.fmtRelativeTime = fmtRelativeTime;

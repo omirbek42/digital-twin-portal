@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ввод показателей — департамент</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div>
+        <h1>Ввод показателей департамента</h1>
+        <div class="subtitle">Выберите департамент и внесите значения за текущий период</div>
+      </div>
+      <a class="btn secondary" href="index.html">На главную</a>
+    </header>
+
+    <div class="chip-row" id="chipRow"></div>
+
+    <div class="panel" id="formPanel" style="display:none;">
+      <div id="formGrid" class="form-grid"></div>
+      <div class="form-footer">
+        <button class="btn" id="saveBtn">Сохранить</button>
+        <span class="save-toast" id="saveToast">Сохранено</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="entry.js"></script>
+</body>
+</html>
